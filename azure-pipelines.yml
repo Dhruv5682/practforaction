@@ -3,7 +3,7 @@ trigger:
 
 variables:
 
-  azureSubscription: '082051ac-9b1f-4b02-8011-a30c2f88d501'
+  azureSubscription: 'serviceconnection1'
   webAppName: 'wefortest1'
   environmentName: 'development'
   vmImageName: 'ubuntu-latest'
