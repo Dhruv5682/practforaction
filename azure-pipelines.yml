@@ -2,11 +2,7 @@ trigger:
   - main
 
 variables:
-
-  azureSubscription: 'serviceconnection1'
-  webAppName: 'wefortest1'
-  environmentName: 'development'
-  vmImageName: 'ubuntu-latest'
+  - group: 'my-pipeline-vars'   
 
 stages:
 - stage: Build
@@ -18,14 +14,17 @@ stages:
       vmImage: $(vmImageName)
       
     steps:
-    - task: NodeTool@0
+    - template: npm-install-template.yml
+
+    - task: DownloadSecureFile@1
+      name: mySecureFile
+      displayName: 'Download Secure File'
       inputs:
-        versionSpec: '24.x'
-      displayName: 'Install Node.js'
+        secureFile: 'my-secure-file.txt' # Change to the name of the file you uploaded
 
     - script: |
-        npm install
-      displayName: 'npm install'
+        echo "Secure file downloaded to: $(mySecureFile.secureFilePath)"
+      displayName: 'Verify Secure File'
 
     - task: ArchiveFiles@2
       displayName: 'Archive files'
