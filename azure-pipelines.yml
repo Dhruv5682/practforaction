@@ -2,7 +2,7 @@ trigger:
   - main
 
 variables:
-  - group: 'my-pipeline-vars'   
+  - group: 'my-pipeline-vars'   # Variable Group
 
 stages:
 - stage: Build
@@ -14,13 +14,13 @@ stages:
       vmImage: $(vmImageName)
       
     steps:
-    - template: npm-install-template.yml
+    - template: npm-install-template.yml # Task Group
 
     - task: DownloadSecureFile@1
       name: mySecureFile
       displayName: 'Download Secure File'
       inputs:
-        secureFile: 'my-secure-file.txt' # Change to the name of the file you uploaded
+        secureFile: 'my-secure-file.txt' # Secrate file
 
     - script: |
         echo "Secure file downloaded to: $(mySecureFile.secureFilePath)"
@@ -54,11 +54,11 @@ stages:
         deploy:
           steps:
           - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App : $(webAppName)'
+            displayName: 'Deploy Azure Web App : $(webappname)'
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
-              appName: $(webAppName)
+              appName: $(webappname)
               runtimeStack: 'NODE|24-lts'
               package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
               startUpCommand: 'npm start'
