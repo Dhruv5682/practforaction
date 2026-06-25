@@ -2,11 +2,7 @@ trigger:
   - main
 
 variables:
-
-  azureSubscription: '082051ac-9b1f-4b02-8011-a30c2f88d501'
-  webAppName: 'wefortest1'
-  environmentName: 'development'
-  vmImageName: 'ubuntu-latest'
+  - group: 'my-pipeline-vars'   # Variable Group
 
 stages:
 - stage: Build
@@ -18,14 +14,17 @@ stages:
       vmImage: $(vmImageName)
       
     steps:
-    - task: NodeTool@0
+    - template: npm-install-template.yml # Task Group
+
+    - task: DownloadSecureFile@1
+      name: mySecureFile
+      displayName: 'Download Secure File'
       inputs:
-        versionSpec: '24.x'
-      displayName: 'Install Node.js'
+        secureFile: 'my-secure-file.txt' # Secrate file
 
     - script: |
-        npm install
-      displayName: 'npm install'
+        echo "Secure file downloaded to: $(mySecureFile.secureFilePath)"
+      displayName: 'Verify Secure File'
 
     - task: ArchiveFiles@2
       displayName: 'Archive files'
@@ -55,11 +54,11 @@ stages:
         deploy:
           steps:
           - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App : $(webAppName)'
+            displayName: 'Deploy Azure Web App : $(webappname)'
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
-              appName: $(webAppName)
+              appName: $(webappname)
               runtimeStack: 'NODE|24-lts'
               package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
               startUpCommand: 'npm start'
