@@ -1,0 +1,70 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+# ──────────────────────────────────────────────────────────────
+# Variable mapping (Azure Pipelines → GitHub Actions):
+#
+#   Variable Group "my-pipeline-vars"  →  GitHub repo variables / secrets
+#     vmImageName                      →  ubuntu-latest (hardcoded, no need for a variable)
+#     webappname                       →  vars.WEBAPP_NAME   (Settings → Variables)
+#     environmentName                  →  GitHub Environment name "production"
+#     azureSubscription                →  secrets.AZURE_CREDENTIALS (JSON service principal)
+#
+# ──────────────────────────────────────────────────────────────
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+
+      - name: npm install
+        run: npm install
+
+      - name: Archive files
+        run: |
+          cd ${{ github.workspace }}
+          zip -r ${{ runner.temp }}/app.zip . -x '.git/*'
+
+      - name: Publish Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: drop
+          path: ${{ runner.temp }}/app.zip
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    environment: production 
+
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: drop
+
+      # Equivalent of: azureSubscription service connection
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Equivalent of: AzureWebApp@1
+      - name: Deploy Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.WEBAPP_NAME }}
+          package: app.zip
+          startup-command: 'npm start'
